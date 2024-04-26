@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  dh_streamlit:
+    container_name: dh_streamlit
+    hostname: dh_streamlit
+    build:
+      context: docker/dh_streamlit
+    ports:
+      - "8501:8501"
+      - "10000:10000"
+
+    volumes: # volume mapping format "[host volume directory]:[container volume directory]", can be configured to your preferred mount point
+      - ./app:/app
