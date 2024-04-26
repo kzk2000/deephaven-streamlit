@@ -1,4 +1,3 @@
-import __main__
 import os
 import streamlit.components.v1 as components
 from uuid import uuid4
@@ -48,7 +47,7 @@ def start_server(host: Optional[str] = None, port: Optional[int] = None, dh_args
     if Server.instance is None:
         print("Initializing Deephaven Server...")
         jvm_args = [
-            "-Xmx12g",
+            "-Xmx24g",
             "-DAuthHandlers=io.deephaven.auth.AnonymousAuthenticationHandler",
         ]
         s = Server(host=host, port=port, jvm_args=jvm_args, dh_args=dh_args)
@@ -93,91 +92,34 @@ def display_dh(widget, height=600, width=None, object_id=None, key=None, session
     """
     from deephaven_server import Server
 
-    # Call through to our private component function. Arguments we pass here
-    # will be sent to the frontend, where they'll be available in an "args"
-    # dictionary.
-    #
-    # "default" is a special argument that specifies the initial return
-    # value of the component before the user has interacted with it.
+    port = Server.instance.port
+    server_url = f"http://localhost:{port}"
 
-    # Generate a new table ID using a UUID prepended with a `__w_` prefix if name not specified
-
-    if isinstance(widget, str):
-        # a string widget must match the object_id
-        object_id = widget
-    elif object_id is None:
-        object_id = f"__w_{str(uuid4()).replace('-', '_')}"
-
-    params = {"name": object_id}
-
-    if isinstance(widget, str):
-        if session is None:
-            raise ValueError(
-                "session must be specified when using a remote pydeephaven object by name"
-            )
-        port = session.port
-        server_url = f"http://{session.host}:{port}/"
-    elif _str_object_type(widget) == "pydeephaven.table.Table":
-        session = widget.session
-
-        if b"envoy-prefix" in session._extra_headers:
-            params["envoyPrefix"] = session._extra_headers[b"envoy-prefix"].decode(
-                "ascii"
-            )
-
-        port = widget.session.port
-        server_url = f"http://{widget.session.host}:{port}/"
-
-        if hasattr(session, "session_manager"):
-            params["authProvider"] = "parent"
-            # We have a DnD session, and we can get the authentication and connection details from the session manager
-            token = base64.b64encode(
-                session.session_manager.auth_client.get_token(
-                    "RemoteQueryProcessor"
-                ).SerializeToString()
-            ).decode("us-ascii")
-            server_url = (
-                widget.session.pqinfo().state.connectionDetails.staticUrl
-            )
-
-        session.bind_table(object_id, widget)
-    else:
-        port = Server.instance.port
-        server_url = f"http://localhost:{port}/"
-
-        # Add the table to the main modules globals list so it can be retrieved by the iframe
-        __main__.__dict__[object_id] = widget
-
-    if "DEEPHAVEN_ST_URL" in os.environ:
-        server_url = os.environ["DEEPHAVEN_ST_URL"]
-
-    if not server_url.endswith("/"):
-        server_url = f"{server_url}/"
-
-    # Generate the iframe_url from the object type
-    iframe_url = f"{server_url}iframe/{_path_for_object(widget)}/?name={object_id}"
-
-    # We don't really need the component value in the Deephaven example, since we're just creating a display widget...
-    # Maybe if we were making a one click widget, that would make sense...
-    # component_value = _component_func(iframe_url=iframe_url, object_type=object_type, width=width, height=height, key=key, default=0)
+    iframe_url = f"{server_url}/iframe/widget/?name={object_id}"
+    print(f"{iframe_url=}")
     return components.iframe(iframe_url, height=height, width=width)
 
 
-if True:
-    import streamlit as st
-
+def app():
     start_server()
 
     st.subheader("Deephaven Component Demo")
 
+    seconds = st.selectbox("Seconds", options=[1,2,3], index=0)
+    print(seconds)
+
     # Create a deephaven component with a simple table
     # Create a table and display it
-    from deephaven import time_table
+    from deephaven import time_table, ring_table
     from deephaven.plot.figure import Figure
+    print(f"PT{seconds}S")
 
-    t = time_table("PT1S").update(["x=i", "y=Math.sin(x)", "z=Math.cos(x)"])
-    display_dh(t, height=200)
+    t = time_table(f"PT{seconds}S").update(["x=i", "y=Math.sin(x)", "z=Math.cos(x)"])
+    t = ring_table(t, 25)
+    display_dh(t, height=200, object_id="t")
 
     f = Figure().plot_xy(series_name="Sine", t=t, x="x", y="y").show()
     f = f.plot_xy(series_name="Cosine", t=t, x="x", y="z").show()
-    display_dh(f, height=400)
+    display_dh(f, height=400, object_id="f")
+
+app()
