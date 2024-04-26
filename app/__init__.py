@@ -8,14 +8,19 @@ start_server(jvm_args=[
 
 st.subheader("Deephaven Component Demo")
 
+seconds = st.selectbox("Seconds", options=[1,2,3], index=0)
+print(seconds)
+
 # Create a deephaven component with a simple table
 # Create a table and display it
-from deephaven import time_table
+from deephaven import time_table, ring_table
 from deephaven.plot.figure import Figure
+print(f"PT{seconds}S")
 
-t = time_table("PT1S").update(["x=i", "y=Math.sin(x) + 15", "z=Math.cos(x) * x"])
-display_dh(t, height=200)
+t = time_table(f"PT{seconds}S").update(["x=i", "y=Math.sin(x)", "z=Math.cos(x)"])
+t = ring_table(t, 25)
+display_dh(t, height=200, object_id="t")
 
 f = Figure().plot_xy(series_name="Sine", t=t, x="x", y="y").show()
 f = f.plot_xy(series_name="Cosine", t=t, x="x", y="z").show()
-display_dh(f, height=400)
+display_dh(f, height=400, object_id="f")
