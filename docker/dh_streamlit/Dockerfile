@@ -26,6 +26,6 @@ ENV \
 ENV JAVA_VERSION 11.0.15
 ENV JAVA_HOME /usr/lib/jvm/java-11-amazon-corretto
 
-RUN pip3 install deephaven-server streamlit
+RUN pip3 install deephaven-server streamlit streamlit-deephaven
 
 ENTRYPOINT ["streamlit", "run", "/app/__init__.py", "--server.port=8501", "--server.address=0.0.0.0"]
