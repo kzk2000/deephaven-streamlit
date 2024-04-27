@@ -23,6 +23,6 @@ ENV \
     JAVA_HOME="/opt/java/openjdk" \
     PATH="/opt/java/openjdk/bin:${PATH}"
 
-RUN pip3 install deephaven-server streamlit streamlit-deephaven
+RUN pip3 install deephaven-server==0.33.3 streamlit
 
-ENTRYPOINT ["streamlit", "run", "/app/__init__.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["streamlit", "run", "/app/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
