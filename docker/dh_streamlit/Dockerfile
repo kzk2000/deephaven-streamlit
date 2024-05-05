@@ -1,6 +1,6 @@
 FROM docker.io/eclipse-temurin:21 as openjdk
 
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # add basics
 RUN set -eux \
@@ -23,6 +23,10 @@ ENV \
     JAVA_HOME="/opt/java/openjdk" \
     PATH="/opt/java/openjdk/bin:${PATH}"
 
-RUN pip3 install deephaven-server==0.33.3 streamlit
+# add Python packages
+COPY requirements.txt /requirements.txt
+RUN pip3 install -r ./requirements.txt
 
-ENTRYPOINT ["streamlit", "run", "/app/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+WORKDIR /app
+
+ENTRYPOINT ["streamlit", "run", "app.py"]

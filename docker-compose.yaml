@@ -8,5 +8,6 @@ services:
       - "8501:8501"
       - "10000:10000"
 
-    volumes: # volume mapping format "[host volume directory]:[container volume directory]", can be configured to your preferred mount point
+    volumes:  # [host volume directory]:[container volume directory]
       - ./app:/app
+
