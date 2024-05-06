@@ -17,15 +17,15 @@ def open_ctx(app_id):
     from deephaven_server import Server
 
     if not hasattr(Server.instance, '__deephaven_ctx'):
-        with server_state_lock["open_ctx" + app_id]:
+        with server_state_lock["dh__main__"]:
             if not hasattr(Server.instance, '__deephaven_ctx'):
-                logger.info("initializing context...")
+                logger.info(f"initializing context...")
 
                 # store the execution context as an attribute on the server instance
                 from deephaven.execution_context import get_exec_ctx
                 Server.instance.__deephaven_ctx = get_exec_ctx()
 
-    logger.info("opening context...")
+    logger.info(f"opening context...")
     Server.instance.__deephaven_ctx.j_exec_ctx.open()
     return Server.instance.__deephaven_ctx
 
@@ -59,13 +59,16 @@ def start_server(
                 logger.info("Initializing Deephaven Server...")
                 s = Server(host=host, port=port, jvm_args=jvm_args)
                 s.start()
+                _ = get_main(context='deephaven')  # caches DH __main__ context EXACTLY ONCE
+                open_ctx(app_id)
                 logger.info(f"Deephaven Server listening on port={s.port}")
             else:
                 logger.info(f'server already running when hitting with id={app_id}')
+                open_ctx(app_id)
 
-    with server_state_lock["dh__main__"]:
-        _ = get_main(context='deephaven' + app_id)  # caches DH __main__ ONLY ONCE applet
+    with server_state_lock["dh__main__" + app_id]:
         open_ctx(app_id)
+
     return Server.instance
 
 
@@ -86,7 +89,10 @@ def display_dh(widget, object_id, app_id, height=600, width=None):
         width of the widget in pixels
     """
     from deephaven_server import Server
-    get_main(context='deephaven' + app_id).__dict__[object_id] = widget
+    get_main(context='deephaven').__dict__[object_id] = widget
+
+#    get_main(context='deephaven' + app_id).__dict__[object_id] = widget
+    st.write(f"__main__ id = {id(get_main(context='deephaven'))}")
 
     # generate the iframe_url from the object type
     server_url = f"http://localhost:{Server.instance.port}"
