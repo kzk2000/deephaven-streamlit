@@ -5,19 +5,20 @@ from menu import menu
 st.set_page_config(page_title="DH Stock UI Dashboard", page_icon="📐", layout="wide")
 
 if 'app_group' not in st.session_state:
-    st.session_state['app_group'] = 'DH Stock UI Dashboard'
+    st.session_state['app_group'] = 'Deephaven Apps'
 
 menu()
-#st.subheader("Deephaven Stock UI Dashboard")
+st.subheader("Deephaven Stock UI Dashboard")
+st.write(__file__)
 
-print("ddd")
 start_server(jvm_args=[
     "-Xmx12g",
     "-DAuthHandlers=io.deephaven.auth.AnonymousAuthenticationHandler",
-])
+],
+    app_id=__file__,
+)
 
-
-
+# only run these imports AFTER the Deephaven server is up
 from deephaven import ui
 from deephaven.plot import express as dx
 from deephaven.plot.figure import Figure
@@ -42,4 +43,4 @@ stock_dash = ui.dashboard(
     )
 )
 
-display_dh(stock_dash, "stock_dash", height=750, width=1700)
+display_dh(stock_dash, "stock_dash", height=750, width=1700, app_id=__file__)

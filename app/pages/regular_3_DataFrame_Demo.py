@@ -8,11 +8,12 @@ from menu import menu
 st.set_page_config(page_title="DataFrame Demo", page_icon="📊")
 
 if "app_group" not in st.session_state:
-    st.session_state["app_group"] = "DataFrame Demo"
+    st.session_state["app_group"] = 'Regular Apps'
 menu()
 
+st.subheader("DataFrame Demo")
+st.write(__file__)
 
-st.markdown("# DataFrame Demo")
 st.sidebar.header("DataFrame Demo")
 st.write(
     """This demo shows how to use `st.write` to visualize Pandas DataFrames.

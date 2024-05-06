@@ -7,13 +7,11 @@ from menu import menu
 st.set_page_config(page_title="Plotting Demo", page_icon="📈")
 
 if 'app_group' not in st.session_state:
-    st.session_state['app_group'] = __file__
+    st.session_state['app_group'] = 'Regular Apps'
 
-menu(suffix='test' )
+menu()
 
-
-
-st.markdown("# Plotting Demo")
+st.subheader("Plotting Demo")
 st.write(__file__)
 
 st.sidebar.header("Plotting Demo")

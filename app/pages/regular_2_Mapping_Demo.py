@@ -8,11 +8,13 @@ from menu import menu
 st.set_page_config(page_title="Mapping Demo", page_icon="🌍")
 
 if 'app_group' not in st.session_state:
-    st.session_state['app_group'] = "Mapping Demo"
+    st.session_state['app_group'] = 'Regular Apps'
 
 menu()
 
-st.markdown("# Mapping Demo")
+st.subheader("Mapping Demo")
+st.write(__file__)
+
 st.sidebar.header("Mapping Demo")
 st.write(
     """This demo shows how to use
