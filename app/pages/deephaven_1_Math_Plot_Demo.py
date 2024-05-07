@@ -11,10 +11,11 @@ menu()
 st.subheader("Deephaven Math Plot Demo")
 st.write(__file__)
 
-start_server(jvm_args=[
-    "-Xmx12g",
-    "-DAuthHandlers=io.deephaven.auth.AnonymousAuthenticationHandler",
-],
+start_server(
+    jvm_args=[
+        "-Xmx12g",
+        "-DAuthHandlers=io.deephaven.auth.AnonymousAuthenticationHandler",
+    ],
     app_id=__file__,
 )
 
