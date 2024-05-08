@@ -1,6 +1,6 @@
 import streamlit as st
-from src.streamlit_deephaven import start_server, display_dh
 from menu import menu
+from src.streamlit_deephaven import start_server, display_dh
 
 st.set_page_config(page_title="DH Stock UI Dashboard", page_icon="📐", layout="wide")
 

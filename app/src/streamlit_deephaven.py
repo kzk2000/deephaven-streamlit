@@ -1,12 +1,15 @@
 import __main__
+import logging
+import threading
 from typing import List, Optional
 
 import streamlit as st
-from streamlit_server_state import server_state_lock
-import logging
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(filename)s:%(lineno)s -> %(funcName)s()] %(message)s", level=logging.INFO)
+
+lock = threading.RLock()
+logger.info("init lock")
 
 
 def open_ctx():
@@ -18,7 +21,7 @@ def open_ctx():
 
     if not hasattr(Server.instance, '__deephaven_ctx'):
         # only lock if you made it his far
-        with server_state_lock["dh__main__"]:
+        with lock:
             if not hasattr(Server.instance, '__deephaven_ctx'):
                 logger.info(f"initializing context...")
 
@@ -46,7 +49,7 @@ def start_server(
 
     if Server.instance is None:
         # only lock if you made it his far
-        with server_state_lock["dh__main__"]:
+        with lock:
             if Server.instance is None:
                 st.write(f"acquired lock for {app_id}")
                 logger.info(f'server_state_lock is active for app_id={app_id}')
@@ -57,7 +60,7 @@ def start_server(
                 open_ctx()  # seems redundant but seem most thread-safe (no errors when having 20+ tabs open)
                 logger.info(f"Deephaven Server is listening on port={s.port}")
             else:
-                logger.info(f'server already running when hitting with id={app_id}')
+                logger.info(f'Deephaven Server is already for this thread...')
 
     open_ctx()
     return Server.instance
@@ -81,13 +84,11 @@ def display_dh(widget, object_id, app_id, height=600, width=None):
     """
     from deephaven_server import Server
 
-    # make thread-safe, just in case
-    with server_state_lock[object_id]:
-        __main__.__dict__[object_id] = widget
-
-    st.write(f"__main__ id = {id(__main__)}")
+    # this assigns the widget to the Deephaven server
+    __main__.__dict__[object_id] = widget
 
     # generate the iframe_url from the object type
     server_url = f"http://localhost:{Server.instance.port}"
     iframe_url = f"{server_url}/iframe/widget/?name={object_id}&nonce={id(widget)}"
+    logger.info(f"{app_id=}, {iframe_url}=")
     return st.components.v1.iframe(iframe_url, height=height, width=width)
