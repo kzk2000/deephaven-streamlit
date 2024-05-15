@@ -12,6 +12,7 @@ def menu_regular(suffix=None):
     st.sidebar.page_link("pages/regular_1_Plotting_Demo.py", label="Plotting Demo", icon='📈')
     st.sidebar.page_link("pages/regular_2_Mapping_Demo.py", label="Mapping Demo", icon="🌍")
     st.sidebar.page_link("pages/regular_3_DataFrame_Demo.py", label="DataFrame Demo", icon="📊")
+    st.sidebar.page_link("pages/regular_4_Menu_Demo.py", label="Menu Demo", icon="📊")
 
 
 def menu_deephaven():

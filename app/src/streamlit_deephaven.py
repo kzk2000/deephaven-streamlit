@@ -2,14 +2,14 @@ import __main__
 import logging
 import threading
 from typing import List, Optional
-
 import streamlit as st
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(format="[%(filename)s:%(lineno)s -> %(funcName)s()] %(message)s", level=logging.INFO)
+logging.basicConfig(format="[%(filename)s:%(lineno)s -> %(funcName)12s()] %(message)s", level=logging.INFO)
 
 lock = threading.RLock()
-logger.info("init lock")
+logger.info(f"thread_id={threading.get_native_id()}: init lock")
+logger.info(f"thread_id={threading.get_native_id()}: {__main__.__dict__['__file__']=}")
 
 
 def open_ctx():
@@ -23,15 +23,15 @@ def open_ctx():
         # only lock if you made it his far
         with lock:
             if not hasattr(Server.instance, '__deephaven_ctx'):
-                logger.info(f"initializing context...")
+                logger.info(f"thread_id={threading.get_native_id()}: initializing context")
 
                 # store the execution context as an attribute on the server instance
                 from deephaven.execution_context import get_exec_ctx
                 Server.instance.__deephaven_ctx = get_exec_ctx()
             else:
-                logger.info(f"context already set for this thread...")
+                logger.info(f"thread_id={threading.get_native_id()}: context already set")
 
-    logger.info(f"opening context...")
+    logger.info(f"thread_id={threading.get_native_id()}: opening context...")
     Server.instance.__deephaven_ctx.j_exec_ctx.open()
     return Server.instance.__deephaven_ctx
 
@@ -51,22 +51,21 @@ def start_server(
         # only lock if you made it his far
         with lock:
             if Server.instance is None:
-                st.write(f"acquired lock for {app_id}")
-                logger.info(f'server_state_lock is active for app_id={app_id}')
-
-                logger.info("starting Deephaven Server...")
+                st.write(f"acquired lock for {app_id=}")
+                logger.info(f"thread_id={threading.get_native_id()}: acquired lock")
+                logger.info(f"thread_id={threading.get_native_id()}: starting Deephaven Server using thread_id=")
                 s = Server(host=host, port=port, jvm_args=jvm_args)
                 s.start()
                 open_ctx()  # seems redundant but seem most thread-safe (no errors when having 20+ tabs open)
-                logger.info(f"Deephaven Server is listening on port={s.port}")
+                logger.info(f"thread_id={threading.get_native_id()}: Deephaven Server is listening on port={s.port}")
             else:
-                logger.info(f'Deephaven Server is already for this thread...')
+                logger.info(f"thread_id={threading.get_native_id()}: Deephaven Server is already live.")
 
     open_ctx()
     return Server.instance
 
 
-def display_dh(widget, object_id, app_id, height=600, width=None):
+def display_dh(widget, object_id, app_id, height=600, width=None, main_dict={}):
     """Display a Deephaven widget.
 
     Parameters
@@ -85,10 +84,11 @@ def display_dh(widget, object_id, app_id, height=600, width=None):
     from deephaven_server import Server
 
     # this assigns the widget to the Deephaven server
+    st.write(f"thread_id={threading.get_native_id()}: {__main__.__dict__['__file__']=}")
     __main__.__dict__[object_id] = widget
 
     # generate the iframe_url from the object type
     server_url = f"http://localhost:{Server.instance.port}"
     iframe_url = f"{server_url}/iframe/widget/?name={object_id}&nonce={id(widget)}"
-    logger.info(f"{app_id=}, {iframe_url}=")
+    logger.info(f"thread_id={threading.get_native_id()}: {app_id=}, {iframe_url=}")
     return st.components.v1.iframe(iframe_url, height=height, width=width)
