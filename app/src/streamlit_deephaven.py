@@ -9,7 +9,7 @@ logging.basicConfig(format="[%(filename)s:%(lineno)s -> %(funcName)12s()] %(mess
 
 lock = threading.RLock()
 logger.info(f"thread_id={threading.get_native_id()}: init lock")
-logger.info(f"thread_id={threading.get_native_id()}: {__main__.__dict__['__file__']=}")
+#logger.info(f"thread_id={threading.get_native_id()}: {__main__.__dict__['__file__']=}")
 
 
 def open_ctx():
@@ -41,6 +41,7 @@ def start_server(
         port: Optional[int] = None,
         jvm_args: Optional[List[str]] = None,
         app_id: Optional[str] = None,
+        file_dict = {},
 ):
     """
     Initialize the Deephaven server. This will start the server if it is not already running.
@@ -56,6 +57,9 @@ def start_server(
                 logger.info(f"thread_id={threading.get_native_id()}: starting Deephaven Server using thread_id=")
                 s = Server(host=host, port=port, jvm_args=jvm_args)
                 s.start()
+                #Server.instance.__global_dict = __main__.__dict__
+                Server.instance.__global_dict = file_dict
+                #Server.instance.__global_dict = dict()
                 open_ctx()  # seems redundant but seem most thread-safe (no errors when having 20+ tabs open)
                 logger.info(f"thread_id={threading.get_native_id()}: Deephaven Server is listening on port={s.port}")
             else:
@@ -85,7 +89,8 @@ def display_dh(widget, object_id, app_id, height=600, width=None, main_dict={}):
 
     # this assigns the widget to the Deephaven server
     st.write(f"thread_id={threading.get_native_id()}: {__main__.__dict__['__file__']=}")
-    __main__.__dict__[object_id] = widget
+    #__main__.__dict__[object_id] = widget
+    Server.instance.__global_dict[object_id] = widget
 
     # generate the iframe_url from the object type
     server_url = f"http://localhost:{Server.instance.port}"

@@ -17,6 +17,7 @@ start_server(
         "-DAuthHandlers=io.deephaven.auth.AnonymousAuthenticationHandler",
     ],
     app_id=__file__,
+    file_dict=locals(),
 )
 
 seconds = st.selectbox("Seconds", options=[1, 2, 3], index=0)
