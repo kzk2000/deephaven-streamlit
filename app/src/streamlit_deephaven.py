@@ -88,7 +88,7 @@ def display_dh(widget, object_id, app_id, height=600, width=None):
 
     # this assigns the widget to the Deephaven server __main__
     Server.instance.__global_dict[object_id] = widget
-    st.write(f"thread_id={threading.get_native_id()}")
+#st.write(f"thread_id={threading.get_native_id()}")
 
     # generate the iframe_url from the object type
     server_url = f"http://localhost:{Server.instance.port}"

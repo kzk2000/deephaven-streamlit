@@ -4,8 +4,8 @@ Experimental repo to combine the best of both worlds from Deephaven and Streamli
 # How to start up
 ```commandline
 docker compose build --no-cache
-docker compose up -d 
+docker compose up
 ```
 
-The Streamlit will be running at http://0.0.0.0:8501
+The Streamlit will be running at http://localhost:8501
 
