@@ -1,11 +1,13 @@
+import __main__
 import logging
 import threading
 from typing import List, Optional
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(format="[%(filename)s:%(lineno)s -> %(funcName)12s()] %(message)s", level=logging.INFO)
+logging.basicConfig(format="[%(filename)s:%(lineno)3s -> %(funcName)12s()] %(message)s", level=logging.INFO)
 
 lock = threading.RLock()
 logger.info(f"thread_id={threading.get_native_id()}: init lock")
@@ -52,17 +54,27 @@ def start_server(
         # lock to avoid race condition from multiple browser tabs loading all at once Streamlit server re-starts
         with lock:
             if Server.instance is None:
-                import __main__  # this is a reference to the current active __main__ of the Streamlit server which we store as attribute on the server instance
                 st.write(f"acquired lock for {app_id=}, using {__main__.__dict__['__file__']=}")
                 logger.info(f"thread_id={threading.get_native_id()}: acquired lock, starting Deephaven Server")
                 s = Server(host=host, port=port, jvm_args=jvm_args)
                 s.start()
+                __main__.__dict__['MAIN_AND_DH_DRIFTED'] = False  # see next 'with lock:' block below
                 Server.instance.__global_dict = __main__.__dict__
 
-                open_ctx()  # it's critical to call this here to attach the execution context from the same thread that's currently holding the lock
+                open_ctx()  # critical to call here to attach execution context for the thread that's holding the lock
                 logger.info(f"thread_id={threading.get_native_id()}: Deephaven Server is listening on port={s.port}")
             else:
                 logger.info(f"thread_id={threading.get_native_id()}: Deephaven Server is already live.")
+
+    with lock:
+        # still unclear if this really needed but won't hurt:
+        # handles a very rare race condition that seems to be possible upon reloading many open Streamlit Chrome tabs
+        # when the Streamlit server re-starts. this ensures that the most recent __main__.__dict__ of the latest
+        # Streamlit server session is always stored as attribute on the server instance as well.
+        if __main__.__dict__.get('MAIN_AND_DH_DRIFTED', True):
+            logger.info(f"__main__.__dict__ has drifted, reset DH server attribute")
+            __main__.__dict__['MAIN_AND_DH_DRIFTED'] = False
+            Server.instance.__global_dict = __main__.__dict__
 
     open_ctx()
     return Server.instance
@@ -88,10 +100,9 @@ def display_dh(widget, object_id, app_id, height=600, width=None):
 
     # this assigns the widget to the Deephaven server __main__
     Server.instance.__global_dict[object_id] = widget
-#st.write(f"thread_id={threading.get_native_id()}")
 
     # generate the iframe_url from the object type
     server_url = f"http://localhost:{Server.instance.port}"
     iframe_url = f"{server_url}/iframe/widget/?name={object_id}&nonce={id(widget)}"
     logger.info(f"thread_id={threading.get_native_id()}: {app_id=}, {iframe_url=}")
-    return st.components.v1.iframe(iframe_url, height=height, width=width)
+    return components.iframe(iframe_url, height=height, width=width)
